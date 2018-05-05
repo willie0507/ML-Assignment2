@@ -1,29 +1,12 @@
-import tensorflow as tf
-import keras.backend.tensorflow_backend as KTF
 from os import walk
-import warnings
 from os.path import join
 import numpy as np
 import keras
 from skimage import io, transform
-from tflearn.layers.conv import global_avg_pool
 from keras.layers import Input, Dense, Activation, Flatten, Conv2D, MaxPooling2D, AveragePooling2D
 from keras.layers import GlobalAveragePooling2D, GlobalMaxPooling2D, BatchNormalization
 from keras.models import Model
-from keras import layers
-from keras import backend as K
-from keras.applications.vgg16 import preprocess_input
-import os
 
-os.environ["CUDA_VISIBLE_DEVICES"] = "3"
-'''
-config = tf.ConfigProto()
-config.gpu_options.per_process_gpu_memory_fraction = 0.4
-session = tf.Session(config=config)
-
-KTF.set_session(session)
-'''
-# In[ ]:
 x_train = []
 y_train = []
 x_test = []
@@ -45,13 +28,13 @@ for root, dirs, files in walk(r"CroppedYale"):
     y_test.extend(label[35:])
     y_train.extend(label[:35])
 
-x_test = preprocess_input(np.array(x_test))
-x_train = preprocess_input(np.array(x_train))
-y_test = keras.utils.to_categorical(y_train, num_classes=39)
+x_test = np.array(x_test)
+x_train = np.array(x_train)
+y_test = keras.utils.to_categorical(y_test, num_classes=39)
 y_train = keras.utils.to_categorical(y_train, num_classes=39)
 
-def vgg16(input_tensor=None, input_shape=None):
 
+def vgg16(input_tensor=None, input_shape=None):
     img_input = Input(shape=input_shape)
 
     # Block 1
@@ -91,13 +74,11 @@ def vgg16(input_tensor=None, input_shape=None):
     # Create model
     return Model(img_input, x, name='vgg16')
 
-# In[ ]:
-
 
 model = vgg16(input_shape=[224, 224, 3])
 model.compile(loss='categorical_crossentropy', optimizer=keras.optimizers.Adam(lr=1e-4), metrics=['accuracy'])
-# model.load_weights("model.h5", by_name=True)
-model.fit(x_train, y_train, batch_size=8, epochs=20)
+model.load_weights("model.h5", by_name=True)
+model.fit(x_train, y_train, batch_size=64, epochs=20)
 score = model.evaluate(x_test, y_test)
 print("\nLoss:", score[0])
 print("Accuracy:", score[1])
